@@ -1,0 +1,30 @@
+#!/bin/bash
+# Uses vpnc to connect to a VPN profile in /usr/local/etc/vpnc/
+# This allows *not* using the default location for VPN profiles
+
+action=$1
+vpnc_config=$2
+secret_path="/usr/local/etc/vpnc"
+
+if [ "$action" == "status" ]; then
+        echo "### Running VPNs ###"
+        ps aux | grep vpnc | grep -v grep | awk '{ print $12 }' | xargs -I _ basename _ .conf
+        exit 0
+fi
+
+if [ -f "$secret_path/$vpnc_config.conf" ]; then
+        if [ "$action" == "start" ]; then
+                vpnc $secret_path/$vpnc_config.conf
+        elif [ "$action" == "stop" ]; then
+                killpid=`ps aux | grep vpnc | grep $vpnc_config | awk '{ print $2 }'`
+                if [ "x$killpid" != "x" ]; then
+                        echo "Killing VPN pid: $killpid"
+                        kill $killpid
+                else
+                        echo "No running VPN found for $vpnc_config"
+                fi
+        fi
+else
+        echo "Unable to find VPN config '$vpnc_config'... Try again!"
+        exit 1
+fi
